@@ -22,11 +22,11 @@ const propertySchema = new mongoose.Schema(
 			type: Number,
 			// required: true,
 		},
-		bathroom: {
+		baths: {
 			type: Number,
 			// required: true,
 		},
-		landArea: {
+		sqft: {
 			type: Number,
 			// required: true,
 		},
@@ -34,7 +34,7 @@ const propertySchema = new mongoose.Schema(
 			type: String,
 			// required: true,
 		},
-		status: {
+		category: {
 			type: String,
 			// required: true,
 		},
@@ -50,7 +50,7 @@ const propertySchema = new mongoose.Schema(
 			type: Number,
 			// required: true,
 		},
-		address: {
+		location: {
 			type: String,
 			// required: true,
 		},
@@ -80,6 +80,10 @@ const propertySchema = new mongoose.Schema(
 		},
 		ccCam: {
 			type: Boolean,
+			// required: true,
+		},
+		feel_360: {
+			type: String,
 			// required: true,
 		},
 	},
