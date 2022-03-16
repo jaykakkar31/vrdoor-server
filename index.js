@@ -37,6 +37,10 @@ app.use(express.json({ limit: "50mb" }));
 app.use("/api/users", userRouter);
 app.use("/api/property", propertyRouter);
 
+app.get("/",(req,res)=>{
+    res.json("Home")
+})
+
 app.listen(port, () => {
 	console.log(`Server listens at http://localhost:${port}`);
 });

@@ -25,10 +25,10 @@ exports.loginUser = asyncHandler(async (req, res) => {
 exports.registerUser = asyncHandler(async (req, res) => {
 	const {
 		email,
-		password,
+		userpass,
 		name,
 		userImage,
-		contact,
+		phoneno,
 	
 	} = req.body;
 
@@ -40,18 +40,17 @@ exports.registerUser = asyncHandler(async (req, res) => {
 		throw new Error("user already exist");
 	} else {
 		bcrypt.genSalt(10, function (err, salt) {
-			bcrypt.hash(password, salt, function (err, hash) {
+			bcrypt.hash(userpass, salt, function (err, hash) {
 				// console.log(salt, password);
 				if (!err) {
 					hashedPassword = hash;
 					const newuser = new User({
 						email: email,
 						name: name,
-						password: hash,
+						userpass: hash,
 						userImage: userImage,
-						
-						contact: contact,
-					
+
+						phoneno: phoneno,
 					});
 					newuser.save(() => {
 						console.log("saved");

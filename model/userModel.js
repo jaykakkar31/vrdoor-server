@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
 	{
 		name: {
 			type: String,
-			required: true,
+			// required: true,
 		},
 		userImage: {
 			type: String,
@@ -12,20 +12,24 @@ const userSchema = new mongoose.Schema(
 		},
 		email: {
 			type: String,
-			required: true,
+			// required: true,
 			trim: true,
 			unique: true,
 			lowercase: true,
 		},
-		password: {
+		userpass: {
 			type: String,
-			required: true,
+			// required: true,
 		},
-		contact: {
+		phoneno: {
 			type: Number,
-			required: true,
+			// required: true,
 		},
-	
+		dob: {
+			type: String,
+			// required: true,
+		},
+
 	},
 	// Mongoose schemas have a timestamps option that tells Mongoose
 	//to automatically manage createdAt and updatedAt properties on your documents.
