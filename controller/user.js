@@ -1,78 +1,166 @@
+require("dotenv").config();
 const asyncHandler = require("express-async-handler");
-var bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const { User } = require("../model/userModel");
+const Email = require("../utils/email");
+const crypto = require("crypto");
 
 const { generateToken } = require("../utils/generateToken");
-exports.loginUser = asyncHandler(async (req, res) => {
-	const { email, password } = req.body;
-	// console.log(req.body, "AUTH");
-	const user = await User.findOne({ email: email });
-	if (user && (await bcrypt.compare(password, user.password))) {
-		res.json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
+const expressAsyncHandler = require("express-async-handler");
 
-			// userImage:user.userImage,
-			token: generateToken(user._id),
-		});
-	} else {
-		res.status(401);
-		throw new Error("Invalid email or password");
-	}
+exports.loginUser = asyncHandler(async (req, res) => {
+  const { email, userpass } = req.body;
+  // console.log(req.body, "AUTH");
+  const user = await User.findOne({ email: email }).select('+active');    
+
+  if(!user){
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  console.log(userpass);
+
+  if (!user.active) {
+    res.status(403);
+    throw new Error("Please activate your email!");       
+  }
+
+  // const encrypted = await bcrypt.hash(userpass, 12);
+
+  // console.log(user.userpass);
+
+  if (user && (await bcrypt.compare(userpass, user.userpass))) {
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+
+      // userImage:user.userImage,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
 });
 
 exports.registerUser = asyncHandler(async (req, res) => {
-	const {
-		email,
-		userpass,
-		name,
-		userImage,
-		phoneno,
-	
-	} = req.body;
+  // const { email, userpass, name, userImage, phoneno } = req.body;
 
-	console.log(req.body, "user");
+  let token = crypto.randomBytes(32).toString("hex");
+  const activationToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
 
-	const userExist = await User.findOne({ email: email });
-	if (userExist) {
-		res.status(401);
-		throw new Error("user already exist");
-	} else {
-		bcrypt.genSalt(10, function (err, salt) {
-			bcrypt.hash(userpass, salt, function (err, hash) {
-				// console.log(salt, password);
-				if (!err) {
-					hashedPassword = hash;
-					const newuser = new User({
-						email: email,
-						name: name,
-						userpass: hash,
-						userImage: userImage,
+  const newUser = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    userpass: req.body.userpass,
+    phoneno: req.body.phoneno,
+    activationToken,
+  });
 
-						phoneno: phoneno,
-					});
-					newuser.save(() => {
-						console.log("saved");
-					});
-					if (newuser) {
-						res.status(200).json({
-							_id: newuser._id,
-							name: newuser.name,
-							email: newuser.email,
-							// userImage: newuser.userImage,
+  const url = `${req.protocol}://${req.get(
+    "host"
+  )}/verified/${activationToken}`;
 
-							token: generateToken(newuser._id),
-						});
-					} else {
-						res.status(400);
-						throw new Error("user not found");
-					}
-				} else {
-					res.status(400);
-					throw new Error(err);
-				}
-			});
-		});
-	}
+  await new Email(newUser, url).sendActivationEmail();
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      newUser,
+    },
+  });
+});
+
+exports.verification = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({
+    activationToken: req.params.activation_token,
+  });
+
+  if (!user) {
+    res.status(401);
+    throw new Error("Your activation token is invalid or may have expired.");
+  }
+
+  user.active = true;
+  user.activationToken = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  // const url = `${req.protocol}://${req.get('host')}/login`;
+
+  // await new Email(user, url).sendWelcome();
+
+  // createSendToken(user, 201, req, res);
+  res.status(200).json({
+    status: "success",
+    user,
+    message: "User verified",
+  });
+});
+
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    res.status(400);
+    throw new Error("User not found with this email!");
+  }
+
+  const resetToken = user.createPasswordResetToken();
+
+  // console.log(resetToken);
+
+  await user.save({ validateBeforeSave: false });
+
+  try {
+    const resetURL = `${req.protocol}://${req.get(
+      "host"
+    )}/api/users/resetPassword/${resetToken}`;
+
+    await new Email(user, resetURL).sendPasswordReset();
+
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!",
+    });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(500);
+    throw new Error("There was an error sending the email. Try again later!");
+  }
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+  });
+
+  // 2) If token has not expired, and there is user, set the new password
+  if (!user) {
+    res.status(400);
+    throw new Error("Your token has expired or is invalid!");
+  }
+
+  user.userpass = req.body.userpass;
+  user.passwordResetToken = undefined;
+
+  await user.save();
+
+  // 3) Update changedPasswordAt property for the user
+  // 4) Log the user in, send JWT
+  res.status(200).json({
+    status: "success",
+    user,
+    message: "Password updated",
+  });
 });

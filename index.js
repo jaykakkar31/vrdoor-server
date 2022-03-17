@@ -4,6 +4,7 @@ const express = require("express");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 const app = express();
 const port = process.env.PORT || 4000;
 const userRouter = require("./routes/userRouter");
@@ -14,6 +15,8 @@ app.use(
 		origin: "*",
 	})
 );
+
+// app.use(express.static(path.join(__dirname, 'public')));
 
 if (process.env.NODE_ENV == "development") {
 	//middleware

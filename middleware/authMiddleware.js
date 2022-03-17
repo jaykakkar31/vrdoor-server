@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const { User } = require("../model/userModel");
+
 exports.authProtect = asyncHandler(async (req, res, next) => {
 	let token;
 	if (req.headers.authorization) {
@@ -24,3 +25,4 @@ exports.authProtect = asyncHandler(async (req, res, next) => {
 		throw new Error("Auth failed,no token");
 	}
 });
+
