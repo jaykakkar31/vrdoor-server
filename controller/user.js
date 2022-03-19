@@ -11,18 +11,18 @@ const expressAsyncHandler = require("express-async-handler");
 exports.loginUser = asyncHandler(async (req, res) => {
   const { email, userpass } = req.body;
   // console.log(req.body, "AUTH");
-  const user = await User.findOne({ email: email }).select('+active');    
+  const user = await User.findOne({ email: email }).select("+active");
 
-  if(!user){
+  if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  console.log(userpass);
+  // console.log(userpass);
 
   if (!user.active) {
     res.status(403);
-    throw new Error("Please activate your email!");       
+    throw new Error("Please activate your email!");
   }
 
   // const encrypted = await bcrypt.hash(userpass, 12);
@@ -89,11 +89,10 @@ exports.verification = asyncHandler(async (req, res, next) => {
   user.activationToken = undefined;
   await user.save({ validateBeforeSave: false });
 
-  // const url = `${req.protocol}://${req.get('host')}/login`;
+  const url = `${req.protocol}://${req.get("host")}/login`;
 
-  // await new Email(user, url).sendWelcome();
+  await new Email(user, url).sendWelcome();
 
-  // createSendToken(user, 201, req, res);
   res.status(200).json({
     status: "success",
     user,
