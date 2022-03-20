@@ -246,3 +246,35 @@ exports.getProperty = asyncHandler(async (req, res) => {
 		throw new Error(e.message);
 	}
 });
+
+exports.updateProperty = asyncHandler(async (req, res) => {
+  const doc = await Property.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,    
+  });
+
+  if (!doc) {
+    res.status(404);
+    throw new Error("No document found with that ID.");    
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: doc
+    }
+  });
+})
+
+exports.deleteProperty = asyncHandler(async (req, res) => {
+  const doc = await Property.findByIdAndDelete(req.params.id);
+
+    if (!doc) {
+      res.status(404);
+      throw new Error("No document found with that ID.");
+    }
+
+    res.status(204).json({
+      status: 'success',
+      data: null
+    });
+})
