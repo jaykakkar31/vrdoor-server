@@ -9,39 +9,39 @@ const { generateToken } = require("../utils/generateToken");
 const expressAsyncHandler = require("express-async-handler");
 
 exports.loginUser = asyncHandler(async (req, res) => {
-	const { email, userpass } = req.body;
-	// console.log(req.body, "AUTH");
-	const user = await User.findOne({ email: email }).select("+active");
+  const { email, userpass } = req.body;
+  // console.log(req.body, "AUTH");
+  const user = await User.findOne({ email: email }).select("+active");
 
-	if (!user) {
-		res.status(404);
-		throw new Error("User not found");
-	}
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
-	console.log(userpass);
+  // console.log(userpass);
 
-	if (!user.active) {
-		res.status(403);
-		throw new Error("Please activate your email!");
-	}
+  if (!user.active) {
+    res.status(403);
+    throw new Error("Please activate your email!");
+  }
 
-	// const encrypted = await bcrypt.hash(userpass, 12);
+  // const encrypted = await bcrypt.hash(userpass, 12);
 
-	// console.log(user.userpass);
+  // console.log(user.userpass);
 
-	if (user && (await bcrypt.compare(userpass, user.userpass))) {
-		res.status(200).json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
+  if (user && (await bcrypt.compare(userpass, user.userpass))) {
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
 
-			// userImage:user.userImage,
-			token: generateToken(user._id),
-		});
-	} else {
-		res.status(401);
-		throw new Error("Invalid email or password");
-	}
+      // userImage:user.userImage,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
 });
 
 exports.registerUser = asyncHandler(async (req, res) => {
@@ -97,16 +97,15 @@ exports.verification = asyncHandler(async (req, res, next) => {
 	user.activationToken = undefined;
 	await user.save({ validateBeforeSave: false });
 
-	// const url = `${req.protocol}://${req.get('host')}/login`;
+  const url = `${req.protocol}://${req.get("host")}/login`;
 
-	// await new Email(user, url).sendWelcome();
+  await new Email(user, url).sendWelcome();
 
-	// createSendToken(user, 201, req, res);
-	res.status(200).json({
-		status: "success",
-		user,
-		message: "User verified",
-	});
+  res.status(200).json({
+    status: "success",
+    user,
+    message: "User verified",
+  });
 });
 
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
