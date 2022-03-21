@@ -2,10 +2,16 @@ const mongoose = require("mongoose");
 
 const propertySchema = new mongoose.Schema(
 	{
+		userId: {
+			type: mongoose.Schema.Types.ObjectId,
+			required: true,
+			ref: "User",
+		},
 		title: {
 			type: String,
 			// required: true,
 		},
+
 		propertyImage: {
 			type: String,
 			// required: true,
@@ -43,7 +49,7 @@ const propertySchema = new mongoose.Schema(
 			// required: true,
 		},
 		parkingSpaces: {
-			type: Boolean,
+			type: Number,
 			// required: true,
 		},
 		roomCount: {

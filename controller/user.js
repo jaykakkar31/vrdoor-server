@@ -9,158 +9,182 @@ const { generateToken } = require("../utils/generateToken");
 const expressAsyncHandler = require("express-async-handler");
 
 exports.loginUser = asyncHandler(async (req, res) => {
-  const { email, userpass } = req.body;
-  // console.log(req.body, "AUTH");
-  const user = await User.findOne({ email: email }).select('+active');    
+	const { email, userpass } = req.body;
+	// console.log(req.body, "AUTH");
+	const user = await User.findOne({ email: email }).select("+active");
 
-  if(!user){
-    res.status(404);
-    throw new Error("User not found");
-  }
+	if (!user) {
+		res.status(404);
+		throw new Error("User not found");
+	}
 
-  console.log(userpass);
+	console.log(userpass);
 
-  if (!user.active) {
-    res.status(403);
-    throw new Error("Please activate your email!");       
-  }
+	if (!user.active) {
+		res.status(403);
+		throw new Error("Please activate your email!");
+	}
 
-  // const encrypted = await bcrypt.hash(userpass, 12);
+	// const encrypted = await bcrypt.hash(userpass, 12);
 
-  // console.log(user.userpass);
+	// console.log(user.userpass);
 
-  if (user && (await bcrypt.compare(userpass, user.userpass))) {
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+	if (user && (await bcrypt.compare(userpass, user.userpass))) {
+		res.status(200).json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
 
-      // userImage:user.userImage,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
+			// userImage:user.userImage,
+			token: generateToken(user._id),
+		});
+	} else {
+		res.status(401);
+		throw new Error("Invalid email or password");
+	}
 });
 
 exports.registerUser = asyncHandler(async (req, res) => {
-  // const { email, userpass, name, userImage, phoneno } = req.body;
+	// const { email, userpass, name, userImage, phoneno } = req.body;
+	try {
+		let token = crypto.randomBytes(32).toString("hex");
+		const activationToken = crypto
+			.createHash("sha256")
+			.update(token)
+			.digest("hex");
 
-  let token = crypto.randomBytes(32).toString("hex");
-  const activationToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+		const newUser = await User.create({
+			name: req.body.name,
+			email: req.body.email,
+			userpass: req.body.userpass,
+			phoneno: req.body.phoneno,
+            dob:req.body.dob,
+            gender:req.body.gender,
+            userImage:req.body.userImage,
+			activationToken,
+		});
 
-  const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    userpass: req.body.userpass,
-    phoneno: req.body.phoneno,
-    activationToken,
-  });
+		const url = `${req.protocol}://${req.get(
+			"host"
+		)}/get/verified/${activationToken}`;
 
-  const url = `${req.protocol}://${req.get(
-    "host"
-  )}/verified/${activationToken}`;
+		await new Email(newUser, url).sendActivationEmail();
 
-  await new Email(newUser, url).sendActivationEmail();
+		res.status(200).json({
+			status: "success",
+			data: {
+				newUser,
+			},
+		});
+	} catch (e) {
+		res.status(400);
 
-  res.status(201).json({
-    status: "success",
-    data: {
-      newUser,
-    },
-  });
+		throw new Error(e.message);
+	}
 });
 
 exports.verification = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({
-    activationToken: req.params.activation_token,
-  });
+	const user = await User.findOne({
+		activationToken: req.params.activation_token,
+	});
 
-  if (!user) {
-    res.status(401);
-    throw new Error("Your activation token is invalid or may have expired.");
-  }
+	if (!user) {
+		res.status(401);
+		throw new Error("Your activation token is invalid or may have expired.");
+	}
 
-  user.active = true;
-  user.activationToken = undefined;
-  await user.save({ validateBeforeSave: false });
+	user.active = true;
+	user.activationToken = undefined;
+	await user.save({ validateBeforeSave: false });
 
-  // const url = `${req.protocol}://${req.get('host')}/login`;
+	// const url = `${req.protocol}://${req.get('host')}/login`;
 
-  // await new Email(user, url).sendWelcome();
+	// await new Email(user, url).sendWelcome();
 
-  // createSendToken(user, 201, req, res);
-  res.status(200).json({
-    status: "success",
-    user,
-    message: "User verified",
-  });
+	// createSendToken(user, 201, req, res);
+	res.status(200).json({
+		status: "success",
+		user,
+		message: "User verified",
+	});
 });
 
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
-  if (!user) {
-    res.status(400);
-    throw new Error("User not found with this email!");
-  }
+	const user = await User.findOne({ email: req.body.email });
+	if (!user) {
+		res.status(400);
+		throw new Error("User not found with this email!");
+	}
 
-  const resetToken = user.createPasswordResetToken();
+	const resetToken = user.createPasswordResetToken();
 
-  // console.log(resetToken);
+	// console.log(resetToken);
 
-  await user.save({ validateBeforeSave: false });
+	await user.save({ validateBeforeSave: false });
 
-  try {
-    const resetURL = `${req.protocol}://${req.get(
-      "host"
-    )}/api/users/resetPassword/${resetToken}`;
+	try {
+		const resetURL = `${req.protocol}://${req.get(
+			"host"
+		)}/api/users/resetPassword/${resetToken}`;
 
-    await new Email(user, resetURL).sendPasswordReset();
+		await new Email(user, resetURL).sendPasswordReset();
 
-    res.status(200).json({
-      status: "success",
-      message: "Token sent to email!",
-    });
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    await user.save({ validateBeforeSave: false });
+		res.status(200).json({
+			status: "success",
+			message: "Token sent to email!",
+		});
+	} catch (err) {
+		user.passwordResetToken = undefined;
+		await user.save({ validateBeforeSave: false });
 
-    res.status(500);
-    throw new Error("There was an error sending the email. Try again later!");
-  }
+		res.status(500);
+		throw new Error("There was an error sending the email. Try again later!");
+	}
 });
 
 exports.resetPassword = asyncHandler(async (req, res) => {
-  // 1) Get user based on the token
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+	// 1) Get user based on the token
+	const hashedToken = crypto
+		.createHash("sha256")
+		.update(req.params.token)
+		.digest("hex");
 
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-  });
+	const user = await User.findOne({
+		passwordResetToken: hashedToken,
+	});
 
-  // 2) If token has not expired, and there is user, set the new password
-  if (!user) {
-    res.status(400);
-    throw new Error("Your token has expired or is invalid!");
-  }
+	// 2) If token has not expired, and there is user, set the new password
+	if (!user) {
+		res.status(400);
+		throw new Error("Your token has expired or is invalid!");
+	}
 
-  user.userpass = req.body.userpass;
-  user.passwordResetToken = undefined;
+	user.userpass = req.body.userpass;
+	user.passwordResetToken = undefined;
 
-  await user.save();
+	await user.save();
 
-  // 3) Update changedPasswordAt property for the user
-  // 4) Log the user in, send JWT
-  res.status(200).json({
-    status: "success",
-    user,
-    message: "Password updated",
-  });
+	// 3) Update changedPasswordAt property for the user
+	// 4) Log the user in, send JWT
+	res.status(200).json({
+		status: "success",
+		user,
+		message: "Password updated",
+	});
+});
+
+exports.fetchData = asyncHandler(async (req, res) => {
+	try {
+		const user = await User.findOne({ _id: req.params.id });
+		if (user) {
+			res.status(200).json(user);
+		} else {
+			res.status(400);
+			throw new Error("User not found");
+		}
+	} catch (e) {
+		res.status(400);
+
+		throw new Error(e.message);
+	}
 });

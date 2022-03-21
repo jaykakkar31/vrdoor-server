@@ -1,9 +1,12 @@
 const asyncHandler = require("express-async-handler");
 // var bcrypt = require("bcryptjs");
 const { Property } = require("../model/propertiesModel");
-
+const mongoose=require("mongoose")
 exports.addProperty = asyncHandler(async (req, res) => {
+    // var id = mongoose.Types.ObjectId("4edd40c86762e0fb12000003");
+
 	const {
+        userId,
 		title,
 		propertyImage,
 		overview,
@@ -184,7 +187,8 @@ exports.addProperty = asyncHandler(async (req, res) => {
 	// console.log(req.body, "user");
 
 	try {
-		const newProperty = new Property({
+		const newProperty = await  Property.create({
+            userId:mongoose.Types.ObjectId(userId),
 			title: title,
 			propertyImage: propertyImage,
 			overview: overview,
@@ -207,11 +211,12 @@ exports.addProperty = asyncHandler(async (req, res) => {
 			ccCam: ccCam,
 			feel_360: feel_360,
 		});
-		newProperty.save(() => {
-			console.log("saved");
-		});
+        console.log(newProperty);
+		// newProperty.save(() => {
+		// 	console.log("saved");
+		// });
 		if (newProperty) {
-			res.status(200).json("propertyAdded");
+			res.status(200).json(newProperty);
 		} else {
 			res.status(400);
 			throw new Error("Property not found");
@@ -246,3 +251,25 @@ exports.getProperty = asyncHandler(async (req, res) => {
 		throw new Error(e.message);
 	}
 });
+
+
+exports.getPropertyByUserId = asyncHandler(async (req, res) => {
+
+	try {
+		const properties = await Property.find({
+			userId:req.params.id,
+		});
+        console.log(properties,"SEND");
+		if (properties) {
+			res.json(properties);
+		} else {
+			res.status(400);
+			throw new Error("Properties not found");
+		}
+	} catch (e) {
+		res.status(400);
+
+		throw new Error(e.message);
+	}
+});
+
