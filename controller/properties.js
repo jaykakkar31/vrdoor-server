@@ -304,3 +304,22 @@ exports.deleteProperty = asyncHandler(async (req, res) => {
       data: null
     });
 })
+
+exports.getPropertyDetailsById = asyncHandler(async (req, res) => {
+	try {
+		const properties = await Property.findOne({
+			_id: req.params.id,
+		});
+		console.log(properties, "SEND");
+		if (properties) {
+			res.json(properties);
+		} else {
+			res.status(400);
+			throw new Error("Properties not found");
+		}
+	} catch (e) {
+		res.status(400);
+
+		throw new Error(e.message);
+	}
+});
