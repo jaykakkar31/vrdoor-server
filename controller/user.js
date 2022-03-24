@@ -66,7 +66,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 
 		const url = `${req.protocol}://${req.get(
 			"host"
-		)}/get/verified/${activationToken}`;
+		)}/verified/${activationToken}`;
 
 		await new Email(newUser, url).sendActivationEmail();
 
