@@ -70,15 +70,16 @@ exports.registerUser = asyncHandler(async (req, res) => {
 			activationToken,
 		});
 		if (newUser) {
-			const url = `${req.protocol}://${req.get(
-				"host"
-			)}/api/users/verified/${activationToken}`;
+			// const url = `${req.protocol}://${req.get(
+			// 	"host"
+			// )}/api/users/verified/${activationToken}`;
+	const url = `http://localhost:3000/activateuser?activate=${activationToken}`;
 
 			await new Email(newUser, url).sendActivationEmail();
 
 			res.status(200).json(newUser);
 		} else {
-			// res.status(400);
+			res.status(400);
 			throw new Error("User not found");
 		}
 	}
