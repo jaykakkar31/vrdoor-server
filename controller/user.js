@@ -73,7 +73,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 			// const url = `${req.protocol}://${req.get(
 			// 	"host"
 			// )}/api/users/verified/${activationToken}`;
-	const url = `http://localhost:3000/activateuser?activate=${activationToken}`;
+			const url = `http://localhost:3000/activateuser?activate=${activationToken}`;
 
 			await new Email(newUser, url).sendActivationEmail();
 
@@ -103,12 +103,12 @@ exports.verification = asyncHandler(async (req, res, next) => {
 		const url = `${req.protocol}://${req.get("host")}/login`;
 
 		await new Email(user, url).sendWelcome();
-
-		res.status(200).json({
-			status: "success",
-			user,
-			message: "User verified",
-		});
+		res.status(200).json(user);
+		// res.status(200).json({
+		// 	status: "success",
+		// 	user,
+		// 	message: "User verified",
+		// });
 	} catch (e) {
 		throw new Error(e.message);
 	}
