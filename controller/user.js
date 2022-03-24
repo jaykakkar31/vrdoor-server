@@ -9,44 +9,50 @@ const { generateToken } = require("../utils/generateToken");
 const expressAsyncHandler = require("express-async-handler");
 
 exports.loginUser = asyncHandler(async (req, res) => {
-  const { email, userpass } = req.body;
-  // console.log(req.body, "AUTH");
-  const user = await User.findOne({ email: email }).select("+active");
+	const { email, userpass } = req.body;
+	// console.log(req.body, "AUTH");
+	const user = await User.findOne({ email: email }).select("+active");
 
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
+	if (!user) {
+		res.status(404);
+		throw new Error("User not found");
+	}
 
-  // console.log(userpass);
+	// console.log(userpass);
 
-  if (!user.active) {
-    res.status(403);
-    throw new Error("Please activate your email!");
-  }
+	if (!user.active) {
+		res.status(403);
+		throw new Error("Please activate your email!");
+	}
 
-  // const encrypted = await bcrypt.hash(userpass, 12);
+	// const encrypted = await bcrypt.hash(userpass, 12);
 
-  // console.log(user.userpass);
+	// console.log(user.userpass);
 
-  if (user && (await bcrypt.compare(userpass, user.userpass))) {
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+	if (user && (await bcrypt.compare(userpass, user.userpass))) {
+		res.status(200).json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
 
-      // userImage:user.userImage,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
+			// userImage:user.userImage,
+			token: generateToken(user._id),
+		});
+	} else {
+		res.status(401);
+		throw new Error("Invalid email or password");
+	}
 });
 
 exports.registerUser = asyncHandler(async (req, res) => {
 	// const { email, userpass, name, userImage, phoneno } = req.body;
-	try {
+
+	const userExist = await User.findOne({ email: req.body.email });
+	console.log(userExist);
+	if (userExist) {
+		res.status(401);
+		throw new Error("User already exist");
+	} else {
 		let token = crypto.randomBytes(32).toString("hex");
 		const activationToken = crypto
 			.createHash("sha256")
@@ -58,54 +64,53 @@ exports.registerUser = asyncHandler(async (req, res) => {
 			email: req.body.email,
 			userpass: req.body.userpass,
 			phoneno: req.body.phoneno,
-            dob:req.body.dob,
-            gender:req.body.gender,
-            userImage:req.body.userImage,
+			dob: req.body.dob,
+			gender: req.body.gender,
+			userImage: req.body.userImage,
 			activationToken,
 		});
+		if (newUser) {
+			const url = `${req.protocol}://${req.get(
+				"host"
+			)}/api/users/verified/${activationToken}`;
 
-		const url = `${req.protocol}://${req.get(
-			"host"
-		)}/verified/${activationToken}`;
+			await new Email(newUser, url).sendActivationEmail();
 
-		await new Email(newUser, url).sendActivationEmail();
-
-		res.status(200).json({
-			status: "success",
-			data: {
-				newUser,
-			},
-		});
-	} catch (e) {
-		res.status(400);
-
-		throw new Error(e.message);
+			res.status(200).json(newUser);
+		} else {
+			// res.status(400);
+			throw new Error("User not found");
+		}
 	}
 });
 
 exports.verification = asyncHandler(async (req, res, next) => {
-	const user = await User.findOne({
-		activationToken: req.params.activation_token,
-	});
+	try {
+		const user = await User.findOne({
+			activationToken: req.params.activation_token,
+		});
 
-	if (!user) {
-		res.status(401);
-		throw new Error("Your activation token is invalid or may have expired.");
+		if (!user) {
+			res.status(401);
+			throw new Error("Your activation token is invalid or may have expired.");
+		}
+
+		user.active = true;
+		user.activationToken = undefined;
+		await user.save({ validateBeforeSave: false });
+
+		const url = `${req.protocol}://${req.get("host")}/login`;
+
+		await new Email(user, url).sendWelcome();
+
+		res.status(200).json({
+			status: "success",
+			user,
+			message: "User verified",
+		});
+	} catch (e) {
+		throw new Error(e.message);
 	}
-
-	user.active = true;
-	user.activationToken = undefined;
-	await user.save({ validateBeforeSave: false });
-
-  const url = `${req.protocol}://${req.get("host")}/login`;
-
-  await new Email(user, url).sendWelcome();
-
-  res.status(200).json({
-    status: "success",
-    user,
-    message: "User verified",
-  });
 });
 
 exports.forgotPassword = asyncHandler(async (req, res, next) => {

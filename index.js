@@ -9,6 +9,7 @@ const app = express();
 const port = process.env.PORT || 4000;
 const userRouter = require("./routes/userRouter");
 const propertyRouter = require("./routes/propertyRoutes");
+const { errorHandler, notFound } = require("./middleware/errorMiddleware");
 
 app.use(
 	cors({
@@ -44,6 +45,11 @@ app.get("/",(req,res)=>{
     res.json("Home")
 })
 
+
+app.use(notFound);
+//Error middleware
+//api right but doesnot match value
+app.use(errorHandler);
 app.listen(port, () => {
 	console.log(`Server listens at http://localhost:${port}`);
 });
