@@ -100,7 +100,7 @@ exports.verification = asyncHandler(async (req, res, next) => {
 		user.activationToken = undefined;
 		await user.save({ validateBeforeSave: false });
 
-		const url = `${req.protocol}://${req.get("host")}/login`;
+		const url = `https://vrdoor.netlify.app/Login`;
 
 		await new Email(user, url).sendWelcome();
 		res.status(200).json(user);
