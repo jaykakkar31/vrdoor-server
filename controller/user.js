@@ -73,7 +73,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 			// const url = `${req.protocol}://${req.get(
 			// 	"host"
 			// )}/api/users/verified/${activationToken}`;
-			const url = `https://vrdoor.netlify.app/activateuser?activate=${activationToken}`;
+			const url = `http://localhost:3000/activateuser?activate=${activationToken}`;
 
 			await new Email(newUser, url).sendActivationEmail();
 
@@ -132,7 +132,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 		// 	"host"
 		// )}/api/users/resetPassword/${resetToken}`;
 
-        const resetURL = `https://vrdoor.netlify.app/resetPassword?resetToken=${resetToken}`;
+        const resetURL = `http://localhost:3000/resetPassword?resetToken=${resetToken}`;
 
 		await new Email(user, resetURL).sendPasswordReset();
 
