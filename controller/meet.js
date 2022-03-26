@@ -45,3 +45,36 @@ exports.addMeeting = expressAsyncHandler(async (req, res) => {
 
 	// }
 });
+
+exports.getCreaterMeet = expressAsyncHandler(async (req, res) => {
+	
+	try {
+		const meet = await Meeting.find({ createrId: req.params.id });
+		if (meet) {
+			res.status(200).json(meet);
+		} else {
+			res.status(400);
+			throw new Error("Meeting not found");
+		}
+	} catch (e) {
+		res.status(400);
+
+		throw new Error(e.message);
+	}
+});
+
+exports.getRecieverMeet = expressAsyncHandler(async (req, res) => {
+	try {
+		const meet = await Meeting.find({ recieverId: req.params.id });
+		if (meet) {
+			res.status(200).json(meet);
+		} else {
+			res.status(400);
+			throw new Error("Meeting not found");
+		}
+	} catch (e) {
+		res.status(400);
+
+		throw new Error(e.message);
+	}
+});
