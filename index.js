@@ -8,6 +8,8 @@ const path = require("path");
 const app = express();
 const port = process.env.PORT || 4000;
 const userRouter = require("./routes/userRouter");
+const meetingRouter = require("./routes/meetingRoutes");
+
 const propertyRouter = require("./routes/propertyRoutes");
 const { errorHandler, notFound } = require("./middleware/errorMiddleware");
 
@@ -37,6 +39,7 @@ mongoose
 	});
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.json({ limit: "50mb" }));
+app.use("/api/meet", meetingRouter);
 
 app.use("/api/users", userRouter);
 app.use("/api/property", propertyRouter);
