@@ -195,3 +195,16 @@ exports.fetchData = asyncHandler(async (req, res) => {
 		throw new Error(e.message);
 	}
 });
+
+exports.updateUser = asyncHandler(async (req, res) => {
+	const doc = await User.findByIdAndUpdate(req.params.id, req.body, {
+		new: true,
+	});
+
+	if (!doc) {
+		res.status(404);
+		throw new Error("No document found with that ID.");
+	}
+
+	res.status(200).json(doc);
+});
