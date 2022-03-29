@@ -3,46 +3,49 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      // required: true,
-    },
-    userImage: {
-      type: String,
-      // required: true,
-    },
-    email: {
-      type: String,
-      // required: true,
-      trim: true,
-      unique: true,
-      lowercase: true,
-    },
-    userpass: {
-      type: String,
-      trim: true,
-      // required: true,
-    },
-    phoneno: {
-      type: Number,
-      // required: true,
-    },
-    dob: {
-      type: String,
-      // required: true,
-    },
-    passwordResetToken: String,
-    active: {
-      type: Boolean,
-      default: false,
-      select: false,
-    },
-    activationToken: String,
-  },
-  // Mongoose schemas have a timestamps option that tells Mongoose
-  //to automatically manage createdAt and updatedAt properties on your documents.
-  { timestamps: true }
+	{
+		name: {
+			type: String,
+			// required: true,
+		},
+		userImage: {
+			type: String,
+			// required: true,
+		},
+		email: {
+			type: String,
+			// required: true,
+			trim: true,
+			unique: true,
+			lowercase: true,
+		},
+		userpass: {
+			type: String,
+			trim: true,
+			// required: true,
+		},
+		phoneno: {
+			type: Number,
+			// required: true,
+		},
+		dob: {
+			type: String,
+			// required: true,
+		},
+		passwordResetToken: String,
+		active: {
+			type: Boolean,
+			default: false,
+			select: false,
+		},
+		gender: {
+			type: String,
+		},
+		activationToken: String,
+	},
+	// Mongoose schemas have a timestamps option that tells Mongoose
+	//to automatically manage createdAt and updatedAt properties on your documents.
+	{ timestamps: true }
 );
 
 userSchema.pre("save", async function (next) {
