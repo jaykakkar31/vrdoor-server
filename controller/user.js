@@ -198,6 +198,7 @@ exports.fetchData = asyncHandler(async (req, res) => {
 
 exports.updateUser = asyncHandler(async (req, res) => {
 	const doc = await User.findByIdAndUpdate(req.params.id, req.body, {
+        overwrite:true,
 		new: true,
 	});
 
