@@ -45,7 +45,7 @@ app.use("/api/users", userRouter);
 app.use("/api/property", propertyRouter);
 
 app.get("/",(req,res)=>{
-    res.json("Home")
+    // res.json("Home")
 })
 
 
